@@ -1,0 +1,400 @@
+import {
+    Address,
+    Extension,
+    ExtensionBuilder,
+    Interaction,
+    Bps,
+    mulDiv,
+    Rounding
+} from '@1inch/limit-order-sdk'
+import {BN, BytesBuilder, BytesIter} from '@1inch/byte-utils'
+
+import assert from 'assert'
+import {AuctionDetails} from './auction-details/index.js'
+import {Whitelist} from './whitelist/whitelist.js'
+import {SurplusParams} from './surplus-params.js'
+import {Fees, IntegratorFee, ResolverFee} from './fees/index.js'
+import {add0x} from '../utils.js'
+
+export class FusionExtension {
+    /**
+     * Flags for post-interaction data
+     * @private
+     */
+    private static CUSTOM_RECEIVER_FLAG_BIT = 0n
+
+    constructor(
+        public readonly address: Address,
+        public readonly auctionDetails: AuctionDetails,
+        public readonly whitelist: Whitelist,
+        public readonly surplus: SurplusParams,
+        public readonly extra?: {
+            makerPermit?: Interaction
+            customReceiver?: Address
+            fees?: Fees
+        }
+    ) {}
+
+    /**
+     * Create `FusionExtension` from bytes
+     *
+     * @param bytes 0x prefixed bytes
+     */
+    public static decode(bytes: string): FusionExtension {
+        const extension = Extension.decode(bytes)
+
+        return FusionExtension.fromExtension(extension)
+    }
+
+    /**
+     * Create `FusionExtension` from `Extension`
+     */
+    public static fromExtension(extension: Extension): FusionExtension {
+        const settlementContract = Address.fromFirstBytes(
+            extension.makingAmountData
+        )
+
+        assert(
+            Address.fromFirstBytes(extension.takingAmountData).equal(
+                settlementContract
+            ) &&
+                Address.fromFirstBytes(extension.postInteraction).equal(
+                    settlementContract
+                ),
+            'Invalid extension, all calls should be to the same address'
+        )
+
+        assert(
+            extension.takingAmountData == extension.makingAmountData,
+            'Invalid extension, taking amount data must be equal to making amount data'
+        )
+
+        // region Parse postInteraction data
+        const interactionBytes = BytesIter.HexString(extension.postInteraction)
+        interactionBytes.nextUint160() // skip address of extension
+        const flags = BN.fromHex(interactionBytes.nextUint8())
+        const integratorFeeRecipient = new Address(
+            interactionBytes.nextUint160()
+        )
+        const protocolFeeRecipient = new Address(interactionBytes.nextUint160())
+
+        const customReceiver = flags.getBit(
+            FusionExtension.CUSTOM_RECEIVER_FLAG_BIT
+        )
+            ? new Address(interactionBytes.nextUint160())
+            : undefined
+
+        const interactionData = parseAmountData(interactionBytes)
+        const whitelist = Whitelist.decodeFrom(interactionBytes)
+        const surplusParams = SurplusParams.decodeFrom(interactionBytes)
+
+        //endregion Parse postInteraction data
+
+        //region Parse amount data
+        const amountBytes = BytesIter.HexString(extension.makingAmountData)
+        amountBytes.nextUint160() // skip address of extension
+
+        const auctionDetails = AuctionDetails.decodeFrom(amountBytes)
+        const amountData = parseAmountData(amountBytes)
+        const whitelistAddressLength = Number(amountBytes.nextUint8())
+
+        assert(
+            whitelist.length === whitelistAddressLength,
+            'whitelist addresses must be same in interaction data and in amount data'
+        )
+
+        const whitelistAddressesFromAmount: string[] = []
+
+        for (let i = 0; i < whitelistAddressLength; i++) {
+            whitelistAddressesFromAmount.push(
+                BigInt(amountBytes.nextBytes(10)).toString(16).padStart(20, '0')
+            )
+        }
+
+        //endregion Parse amount data
+
+        const makerPermit = extension.hasMakerPermit
+            ? Interaction.decode(extension.makerPermit)
+            : undefined
+
+        assert(
+            amountData.fees.integratorFee.value ===
+                interactionData.fees.integratorFee.value,
+            `invalid extension: integrator fee must be same in interaction data and in amount data`
+        )
+        assert(
+            amountData.fees.resolverFee.value ===
+                interactionData.fees.resolverFee.value,
+            `invalid extension: resolver fee must be same in interaction data and in amount data`
+        )
+
+        assert(
+            amountData.fees.whitelistDiscount.equal(
+                interactionData.fees.whitelistDiscount
+            ),
+            `invalid extension: whitelistDiscount must be same in interaction data and in amount data`
+        )
+
+        assert(
+            amountData.fees.integratorShare.value ===
+                interactionData.fees.integratorShare.value,
+            `invalid extension: integrator share must be same in interaction data and in amount data`
+        )
+
+        assert(
+            whitelist.whitelist.every(
+                ({addressHalf}, i) =>
+                    whitelistAddressesFromAmount[i] === addressHalf
+            ),
+            'whitelist addresses must be same in interaction data and in amount data'
+        )
+
+        const hasFees =
+            !integratorFeeRecipient.isZero() || !protocolFeeRecipient.isZero()
+
+        if (!hasFees) {
+            return new FusionExtension(
+                settlementContract,
+                auctionDetails,
+                whitelist,
+                surplusParams,
+                {
+                    makerPermit,
+                    customReceiver,
+                    fees: undefined
+                }
+            )
+        }
+
+        const fees = new Fees(
+            new ResolverFee(
+                protocolFeeRecipient,
+                interactionData.fees.resolverFee,
+                interactionData.fees.whitelistDiscount
+            ),
+            interactionData.fees.integratorFee.isZero()
+                ? IntegratorFee.ZERO
+                : new IntegratorFee(
+                      integratorFeeRecipient,
+                      protocolFeeRecipient,
+                      interactionData.fees.integratorFee,
+                      interactionData.fees.integratorShare
+                  )
+        )
+
+        return new FusionExtension(
+            settlementContract,
+            auctionDetails,
+            whitelist,
+            surplusParams,
+            {
+                makerPermit,
+                fees,
+                customReceiver
+            }
+        )
+    }
+
+    public build(): Extension {
+        const amountData = this.buildAmountGetterData(true)
+
+        const builder = new ExtensionBuilder()
+            .withMakingAmountData(this.address, amountData)
+            .withTakingAmountData(this.address, amountData)
+            .withPostInteraction(
+                new Interaction(this.address, this.buildInteractionData())
+            )
+
+        if (this.extra?.makerPermit) {
+            builder.withMakerPermit(
+                this.extra?.makerPermit.target,
+                this.extra?.makerPermit.data
+            )
+        }
+
+        return builder.build()
+    }
+
+    /**
+     * Build data for `FeeTaker.postInteraction`
+     *
+     * Data is built of:
+     *  `1 byte` - flags:
+     *      01 bit `CUSTOM_RECEIVER_FLAG` - set to 1 if order has custom receiver
+     *  `20 bytes` — integrator fee recipient
+     *  `20 bytes` - protocol fee recipient
+     *  `[20 bytes]` — receiver of taking tokens (optional, if not set, maker is used). See `CUSTOM_RECEIVER_FLAG` flag
+     *  `bytes` - same as in `buildAmountGetterData`
+     *  `32 bytes` - estimated taking amount
+     *  `1 byte` - protocol surplus fee (in 1e2)
+     * @see buildAmountGetterData
+     * @see https://github.com/1inch/limit-order-protocol/blob/22a18f7f20acfec69d4f50ce1880e8e662477710/contracts/extensions/FeeTaker.sol#L114
+     */
+    private buildInteractionData(): string {
+        const customReceiver =
+            this.extra?.customReceiver || Address.ZERO_ADDRESS
+
+        const flags = new BN(0n).setBit(
+            FusionExtension.CUSTOM_RECEIVER_FLAG_BIT,
+            Boolean(!customReceiver.isZero())
+        )
+
+        const integratorReceiver =
+            this.extra?.fees?.integrator.integrator || Address.ZERO_ADDRESS
+        const protocolReceiver =
+            this.extra?.fees?.protocol || Address.ZERO_ADDRESS
+
+        const builder = new BytesBuilder()
+            .addUint8(flags)
+            .addAddress(integratorReceiver.toString())
+            .addAddress(protocolReceiver.toString())
+
+        if (!customReceiver.isZero()) {
+            builder.addAddress(customReceiver.toString())
+        }
+
+        builder.addBytes(this.buildAmountGetterData(false))
+
+        // surplus params
+        builder.addUint256(this.surplus.estimatedTakerAmount)
+        builder.addUint8(BigInt(this.surplus.protocolFee.toPercent()))
+
+        return builder.asHex()
+    }
+
+    /**
+     * Build data for getMakingAmount/getTakingAmount
+     *
+     * AuctionDetails
+     * 2 bytes — integrator fee percentage (in 1e5)
+     * 1 byte - integrator share percentage (in 1e2)
+     * 2 bytes — resolver fee percentage (in 1e5)
+     * 1 byte - whitelist discount numerator (in 1e2)
+     * Whitelist
+     *
+     * @see https://github.com/1inch/limit-order-settlement/blob/82f0a25c969170f710825ce6aa6920062adbde88/contracts/SimpleSettlement.sol#L34
+     */
+    private buildAmountGetterData(forAmountGetters: boolean): string {
+        const builder = new BytesBuilder()
+
+        if (forAmountGetters) {
+            // auction data required only for `getMakingAmount/getTakingAmount` and not for `postInteraction`
+            this.auctionDetails.encodeInto(builder)
+        }
+
+        const integrator = {
+            fee:
+                this.extra?.fees?.integrator.fee.toFraction(Fees.BASE_1E5) || 0,
+            share:
+                this.extra?.fees?.integrator.share.toFraction(Fees.BASE_1E2) ||
+                0
+        }
+
+        const resolverFee =
+            this.extra?.fees?.resolver.fee.toFraction(Fees.BASE_1E5) || 0
+        const whitelistDiscount =
+            this.extra?.fees?.resolver.whitelistDiscount || Bps.ZERO
+
+        builder
+            .addUint16(BigInt(integrator.fee))
+            .addUint8(BigInt(integrator.share))
+            .addUint16(BigInt(resolverFee))
+            .addUint8(
+                BigInt(
+                    // contract expects discount numerator, but class contain discount
+                    Number(Fees.BASE_1E2) -
+                        whitelistDiscount.toFraction(Fees.BASE_1E2)
+                )
+            )
+
+        if (forAmountGetters) {
+            // amount getters need only addresses, without delays
+            builder.addUint8(BigInt(this.whitelist.whitelist.length))
+            this.whitelist.whitelist.forEach((i) => {
+                builder.addBytes(add0x(i.addressHalf))
+            })
+        } else {
+            this.whitelist.encodeInto(builder)
+        }
+
+        return builder.asHex()
+    }
+
+    private getFeesForTaker(taker: Address): {
+        resolverFee: bigint
+        integratorFee: bigint
+    } {
+        const whitelistDiscount =
+            this.extra?.fees?.resolver.whitelistDiscount.toFraction(
+                Fees.BASE_1E2
+            ) || 0
+
+        const discountNumerator = this.whitelist.isWhitelisted(taker)
+            ? (Number(Fees.BASE_1E2) - whitelistDiscount) /
+              Number(Fees.BASE_1E2)
+            : 1
+
+        const resolverFee =
+            discountNumerator *
+            (this.extra?.fees?.resolver.fee.toFraction(Fees.BASE_1E5) || 0)
+
+        const resolverFeeBN = BigInt(resolverFee)
+        const integratorFeeBN = BigInt(
+            this.extra?.fees?.integrator.fee.toFraction(Fees.BASE_1E5) || 0
+        )
+
+        return {
+            resolverFee: resolverFeeBN,
+            integratorFee: integratorFeeBN
+        }
+    }
+
+    /**
+     * Returns takingAmount with fee, but without auction bump
+     * @param taker
+     * @param orderTakingAmount
+     * @private
+     */
+    private getTakingAmountWithFee(
+        taker: Address,
+        orderTakingAmount: bigint
+    ): bigint {
+        const fees = this.getFeesForTaker(taker)
+
+        return mulDiv(
+            orderTakingAmount,
+            Fees.BASE_1E5 + fees.resolverFee + fees.integratorFee,
+            Fees.BASE_1E5,
+            Rounding.Ceil
+        )
+    }
+}
+
+function parseAmountData(iter: BytesIter<string>): {
+    fees: {
+        integratorFee: Bps
+        integratorShare: Bps
+        resolverFee: Bps
+        whitelistDiscount: Bps
+    }
+} {
+    const fees = {
+        integratorFee: Bps.fromFraction(
+            Number(iter.nextUint16()),
+            Fees.BASE_1E5
+        ),
+        integratorShare: Bps.fromFraction(
+            Number(iter.nextUint8()),
+            Fees.BASE_1E2
+        ),
+        resolverFee: Bps.fromFraction(Number(iter.nextUint16()), Fees.BASE_1E5),
+        whitelistDiscount: Bps.fromFraction(
+            Number(Fees.BASE_1E2) - Number(iter.nextUint8()), // contract uses 1 - discount
+            Fees.BASE_1E2
+        )
+    }
+
+    return {
+        fees
+    }
+}
