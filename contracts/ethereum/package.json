@@ -1,0 +1,24 @@
+{
+  "name": "stellar-fusion-ethereum-contracts",
+  "version": "1.0.0",
+  "description": "1inch Fusion+ contracts deployment for Stellar extension",
+  "main": "deploy-1inch-contracts.js",
+  "scripts": {
+    "deploy:sepolia": "npx hardhat run deploy-1inch-contracts.js --network sepolia",
+    "deploy:local": "npx hardhat run deploy-1inch-contracts.js --network localhost",
+    "test": "npx hardhat test",
+    "compile": "npx hardhat compile"
+  },
+  "dependencies": {
+    "hardhat": "^2.19.4",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "ethers": "^6.8.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.5"
+  },
+  "keywords": ["1inch", "fusion", "ethereum", "sepolia", "smart-contracts"],
+  "author": "Stellar Fusion+ Team",
+  "license": "MIT"
+}

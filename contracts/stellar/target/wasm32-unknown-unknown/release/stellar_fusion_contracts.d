@@ -1,0 +1,1 @@
+/Users/arihaannegi/Desktop/Hackathons/Unite\ Defi/unitedefi/contracts/stellar/target/wasm32-unknown-unknown/release/stellar_fusion_contracts.wasm: /Users/arihaannegi/Desktop/Hackathons/Unite\ Defi/unitedefi/contracts/stellar/src/lib.rs
