@@ -16,9 +16,9 @@ This project implements a cross-chain atomic swap system with three main compone
 - ✅ Hashlock and timelock functionality preservation  
 - ✅ Atomic swap guarantees
 - ✅ MetaMask integration with RainbowKit
-- ✅ Modern bridge-like UI with chain logos
+- ✅ Modern bridge-like UI
 - ✅ Balance tracking and transaction status
-- ✅ Adaptive resolver with direct transfers for new networks
+- ✅ Cross-chain resolver with multi-network support
 
 ## 🌐 Network Configuration
 
@@ -75,33 +75,7 @@ npm run dev
 ├── contracts/          # Smart contracts with hashlock/timelock
 ├── frontend/           # React UI with Web3 integration
 ├── resolver/           # Mock solver agent
+├── scripts/            # Testing and utility scripts
 ├── docs/              # Documentation
 └── Samples/           # 1inch reference implementations
 ```
-
-## 🔐 Security Notes
-
-- Uses cryptographic hashlocks for atomic swaps
-- Implements timelocks for refund mechanisms
-- Testnet-only implementation with provided test accounts
-- All private keys are for testnet use only
-- Environment variables used for private key management
-- `.env` files are gitignored to prevent accidental exposure
-
-## 🎯 Hackathon Requirements
-
-- ✅ Cross-chain token swaps across multiple EVM testnets
-- ✅ Hashlock and timelock functionality preserved
-- ✅ Multi-directional swap functionality between all 4 chains
-- ✅ Onchain execution on all supported testnets
-- ✅ Mock resolver agent implementation with adaptive handling
-- ✅ Compatible with 1inch infrastructure patterns
-- ✅ Secure deployment practices with environment variable management
-
-## 🔧 Technical Implementation
-
-### Resolver Strategy
-- **Established Networks** (Sepolia/Celo): Uses escrow factory pattern with hashlocks
-- **New Networks** (Monad/Etherlink): Uses direct transfer approach for immediate settlement
-- **Gas Optimization**: Increased gas limits (1M) for complex cross-chain operations
-- **Error Handling**: Network-specific validation and fallback mechanisms
