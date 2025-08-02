@@ -1,0 +1,37 @@
+{
+  "name": "1inch-fusion-celo-bridge",
+  "version": "1.0.0",
+  "description": "Cross-chain token swap between Ethereum Sepolia and Celo Alfajores using 1inch Fusion+ principles",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:resolver\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:resolver": "cd resolver && npm run dev",
+    "build": "npm run build:contracts && npm run build:frontend && npm run build:resolver",
+    "build:contracts": "cd contracts && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "build:resolver": "cd resolver && npm run build",
+    "deploy:contracts": "cd contracts && npm run deploy",
+    "test": "npm run test:contracts && npm run test:frontend && npm run test:resolver",
+    "test:contracts": "cd contracts && npm run test",
+    "test:frontend": "cd frontend && npm run test",
+    "test:resolver": "cd resolver && npm run test"
+  },
+  "keywords": [
+    "1inch",
+    "fusion+",
+    "cross-chain",
+    "defi",
+    "ethereum",
+    "celo"
+  ],
+  "author": "Hackathon Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0"
+  }
+}

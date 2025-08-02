@@ -1,0 +1,7 @@
+{
+  "chainId": "44787",
+  "escrowFactory": "0xC477386A8CED1fE69d5d4eCD8EaF6558DA9e537c",
+  "settlement": "0xcEeeaA149BEd3Af5FB9553f0AdA0a537efcc6256",
+  "deployer": "0xF86eCcDc06855d5e56F3B4949D3D02Fa9396F100",
+  "resolver": "0x917999645773E99d03d44817B7318861F018Cb74"
+}

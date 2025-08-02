@@ -1,0 +1,15 @@
+{
+  "chainId": "11155111",
+  "name": "Ethereum Sepolia",
+  "deployments": {
+    "weth": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+    "trueERC20": "0xe2b57eBae758e797B40936141239F613f97228Fb",
+    "limitOrderProtocol": "0x7cE1Db8Ca0769aBED8867222f7b9ec808A7565d0",
+    "escrowFactory": "0x9E12f1D513b90F64dd45dE7bE20983DE6152E870",
+    "settlement": "0xC144D565e799ed813e09d2D43FEC191caC564Ec4",
+    "usdc": "0xfC47b0FFACC1ef1c6267f06F2A15cDB23a44c93d"
+  },
+  "resolver": "0x917999645773E99d03d44817B7318861F018Cb74",
+  "deployedAt": "2025-08-01T02:22:25.201Z",
+  "status": "complete"
+}

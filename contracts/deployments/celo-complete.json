@@ -1,0 +1,15 @@
+{
+  "chainId": "44787",
+  "name": "Celo Alfajores",
+  "deployments": {
+    "weth": "0xfC47b0FFACC1ef1c6267f06F2A15cDB23a44c93d",
+    "trueERC20": "0xC97139a987a0B2c988Cb478b7A392FBF05C5f168",
+    "limitOrderProtocol": "0x176f5c341F9b1812b866c97677c270F3209d7D8b",
+    "escrowFactory": "0xa829F1f93b3845FC893b1DFc591A0A964E953356",
+    "settlement": "0x14367b834E7C39fD316730D413bF07c7e7a2E1A9",
+    "usdc": "0x2F25deB3848C207fc8E0c34035B3Ba7fC157602B"
+  },
+  "resolver": "0x917999645773E99d03d44817B7318861F018Cb74",
+  "deployedAt": "2025-08-01T02:22:57.621Z",
+  "status": "complete"
+}

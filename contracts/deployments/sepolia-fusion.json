@@ -1,0 +1,14 @@
+{
+  "chainId": "11155111",
+  "deployments": {
+    "weth": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
+    "trueERC20": "0x8555636D46a8920e64098F6154070099FF8eF310",
+    "limitOrderProtocol": "0x1111111254fb6c44bAC0beD2854e76F90643097d",
+    "settlement": "0x3a5DBDEc82D25B71FdC9dd7Fa74B2C815b5b6EF3",
+    "escrowFactory": "0xa7bcb4eac8964306f9e3764f67db6a7af6ddf99a"
+  },
+  "resolver": "0x917999645773E99d03d44817B7318861F018Cb74",
+  "tokens": {
+    "usdc": "0xfC47b0FFACC1ef1c6267f06F2A15cDB23a44c93d"
+  }
+}
