@@ -82,8 +82,6 @@ npm run dev
 ├── frontend/           # React UI with Web3 integration
 ├── resolver/           # Mock solver agent
 ├── scripts/            # Testing and utility scripts
-├── docs/              # Documentation
-└── Samples/           # 1inch reference implementations
 ```
 
 ## 🔐 Security Notes
