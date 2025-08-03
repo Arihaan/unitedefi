@@ -95,16 +95,6 @@ npm run dev
 - Environment variables used for private key management
 - `.env` files are gitignored to prevent accidental exposure
 
-## 🎯 Hackathon Requirements
-
-- ✅ Cross-chain token swaps across multiple blockchain testnets
-- ✅ Hashlock and timelock functionality preserved
-- ✅ Multi-directional swap functionality between all 5 chains
-- ✅ Onchain execution on all supported testnets
-- ✅ Mock resolver agent implementation
-- ✅ Compatible with 1inch infrastructure patterns
-- ✅ Secure deployment practices with environment variable management
-
 ## 🔧 Technical Implementation
 
 ### Cross-Chain Architecture
