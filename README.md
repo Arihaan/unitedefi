@@ -1,6 +1,6 @@
-# 1inch Fusion+ Cross-Chain Bridge: Multi-Chain EVM Support
+# 1inch Fusion+ Cross-Chain Bridge: Multi-Chain Support
 
-A Proof of Concept implementation demonstrating cross-chain token swaps using 1inch Fusion+ principles across multiple EVM testnets: Ethereum Sepolia, Celo Alfajores, Monad Testnet, and Etherlink Testnet.
+A Proof of Concept implementation demonstrating cross-chain token swaps using 1inch Fusion+ principles across multiple blockchain testnets: Ethereum Sepolia, Celo Alfajores, Monad Testnet, Etherlink Testnet, and Tron Shasta.
 
 ## 🏗️ Architecture
 
@@ -12,7 +12,7 @@ This project implements a cross-chain atomic swap system with three main compone
 
 ## 🔧 Features
 
-- ✅ Multi-chain USDC swaps across 4 EVM testnets
+- ✅ Multi-chain USDC swaps across 5 blockchain testnets (4 EVM + Tron)
 - ✅ Hashlock and timelock functionality preservation  
 - ✅ Atomic swap guarantees
 - ✅ MetaMask integration with RainbowKit
@@ -45,6 +45,12 @@ This project implements a cross-chain atomic swap system with three main compone
 - RPC: `https://node.ghostnet.etherlink.com`
 - USDC: `0xC477386A8CED1fE69d5d4eCD8EaF6558DA9e537c`
 - Contracts: Settlement `0x1eB50687659aD0012e70f6407C4Fe2d312827df2` | EscrowFactory `0xcEeeaA149BEd3Af5FB9553f0AdA0a537efcc6256`
+
+### Tron Shasta
+- Chain ID: `2`
+- RPC: `https://api.shasta.trongrid.io`
+- USDC: `TLcrNFz7x433NsqFrJFc3aixZGLUsC6brA`
+- Contracts: Settlement `TQsFBuQZHoCi4MMtMFvb2sW5N8hntW4BZE` | EscrowFactory `TQsFBuQZHoCi4MMtMFvb2sW5N8hntW4BZE`
 
 ## 🚀 Quick Start
 
@@ -79,3 +85,31 @@ npm run dev
 ├── docs/              # Documentation
 └── Samples/           # 1inch reference implementations
 ```
+
+## 🔐 Security Notes
+
+- Uses cryptographic hashlocks for atomic swaps
+- Implements timelocks for refund mechanisms
+- Testnet-only implementation with provided test accounts
+- All private keys are for testnet use only
+- Environment variables used for private key management
+- `.env` files are gitignored to prevent accidental exposure
+
+## 🎯 Hackathon Requirements
+
+- ✅ Cross-chain token swaps across multiple blockchain testnets
+- ✅ Hashlock and timelock functionality preserved
+- ✅ Multi-directional swap functionality between all 5 chains
+- ✅ Onchain execution on all supported testnets
+- ✅ Mock resolver agent implementation
+- ✅ Compatible with 1inch infrastructure patterns
+- ✅ Secure deployment practices with environment variable management
+
+## 🔧 Technical Implementation
+
+### Cross-Chain Architecture
+- **Smart Contracts**: Escrow factory pattern with hashlock/timelock mechanisms
+- **Resolver Service**: Multi-network support with gas optimization
+- **Frontend Integration**: RainbowKit wallet connection with chain switching
+- **Tron Integration**: TronWeb support for non-EVM blockchain compatibility
+- **Security**: Environment-based private key management

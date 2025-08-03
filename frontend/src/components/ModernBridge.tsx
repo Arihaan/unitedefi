@@ -15,6 +15,8 @@ import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { NETWORKS, ERC20_ABI, ESCROW_FACTORY_ABI, RESOLVER_ADDRESS } from '@/config/contracts'
+import { useTronLink } from '@/hooks/useTronLink'
+import { convertAddressForNetwork, isValidTronAddress, isValidEthAddress } from '@/utils/addressConversion'
 import { 
   ArrowRightLeft, 
   Wallet, 
@@ -30,13 +32,14 @@ import {
   ChevronDown
 } from 'lucide-react'
 
-type NetworkKey = 'sepolia' | 'celo' | 'monad' | 'etherlink'
+type NetworkKey = 'sepolia' | 'celo' | 'monad' | 'etherlink' | 'tron'
 
 const NETWORK_LOGOS = {
   sepolia: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%20fill%3D%22none%22%3E%3Cpath%20fill%3D%22%2325292E%22%20fill-rule%3D%22evenodd%22%20d%3D%22M14%2028a14%2014%200%201%200%200-28%2014%2014%200%200%200%200%2028Z%22%20clip-rule%3D%22evenodd%22%2F%3E%3Cpath%20fill%3D%22url(%23a)%22%20fill-opacity%3D%22.3%22%20fill-rule%3D%22evenodd%22%20d%3D%22M14%2028a14%2014%200%201%200%200-28%2014%2014%200%200%200%200%2028Z%22%20clip-rule%3D%22evenodd%22%2F%3E%3Cpath%20fill%3D%22url(%23b)%22%20d%3D%22M8.19%2014.77%2014%2018.21l5.8-3.44-5.8%208.19-5.81-8.19Z%22%2F%3E%3Cpath%20fill%3D%22%23fff%22%20d%3D%22m14%2016.93-5.81-3.44L14%204.34l5.81%209.15L14%2016.93Z%22%2F%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22a%22%20x1%3D%220%22%20x2%3D%2214%22%20y1%3D%220%22%20y2%3D%2228%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22b%22%20x1%3D%2214%22%20x2%3D%2214%22%20y1%3D%2214.77%22%20y2%3D%2222.96%22%20gradientUnits%3D%22userSpaceOnUse%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%22.9%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3C%2Fsvg%3E%0A",
   celo: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%20fill%3D%22none%22%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2214%22%20r%3D%2214%22%20fill%3D%22%23FCFF52%22%2F%3E%3Cpath%20d%3D%22M21%207H7v14h14v-4.887h-2.325a5.126%205.126%200%200%201-4.664%203.023c-2.844%200-5.147-2.325-5.147-5.147-.003-2.822%202.303-5.125%205.147-5.125%202.102%200%203.904%201.28%204.704%203.104H21V7Z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E",
   monad: "https://img.notionusercontent.com/s3/prod-files-secure%2F8b536fe4-3bbf-45fc-b661-190b80c94bea%2F23726c6b-16c2-430e-92d7-c144a7a6719b%2FMonad_Logo_-_Default_-_Logo_Mark.svg/size/?exp=1754236333&sig=PrJz3P774ATUTnQ2P9zIIytQ5txVKJL7xjFN8WqGidY&id=16863675-94f2-80f6-9f47-f3ec0de0ddcf&table=block",
-  etherlink: "https://ethglobal.b-cdn.net/organizations/ky7kr/square-logo/default.png"
+  etherlink: "https://ethglobal.b-cdn.net/organizations/ky7kr/square-logo/default.png",
+  tron: "https://s2.coinmarketcap.com/static/img/coins/64x64/1958.png"
 }
 
 interface SwapData {
@@ -65,11 +68,24 @@ export function ModernBridge() {
   const chainId = useChainId()
   const { switchChain } = useSwitchChain()
   const { writeContract, data: writeContractData, isPending: isWritePending, error: writeError } = useWriteContract()
+  
+  // TronLink integration
+  const { 
+    isConnected: isTronConnected, 
+    account: tronAccount, 
+    balance: tronBalance, 
+    connect: connectTron, 
+    disconnect: disconnectTron,
+    sendUSDC: sendTronUSDC,
+    error: tronError,
+    isLoading: tronLoading,
+    isTronLinkAvailable
+  } = useTronLink()
 
   // State Management
   const [swapData, setSwapData] = useState<SwapData>({
     fromNetwork: 'sepolia',
-    toNetwork: 'celo',
+    toNetwork: 'tron',
     amount: '',
     destinationAddress: ''
   })
@@ -226,6 +242,13 @@ export function ModernBridge() {
       case 'celo': return celoBalance
       case 'monad': return monadBalance
       case 'etherlink': return etherlinkBalance
+      case 'tron': 
+        return tronBalance ? {
+          value: BigInt(Math.floor(tronBalance.tokenBalance * 1e6)),
+          formatted: tronBalance.tokenBalance.toFixed(4),
+          decimals: 6,
+          symbol: 'USDC'
+        } : { value: BigInt(0), formatted: '0', decimals: 6, symbol: 'USDC' }
       default: return null
     }
   }
@@ -236,6 +259,13 @@ export function ModernBridge() {
       case 'celo': return celoNative
       case 'monad': return monadNative
       case 'etherlink': return etherlinkNative
+      case 'tron': 
+        return tronBalance ? {
+          value: BigInt(Math.floor(tronBalance.balance * 1e6)),
+          formatted: tronBalance.balance.toFixed(4),
+          decimals: 6,
+          symbol: 'TRX'
+        } : { value: BigInt(0), formatted: '0', decimals: 6, symbol: 'TRX' }
       default: return null
     }
   }
@@ -246,6 +276,7 @@ export function ModernBridge() {
       case 'celo': return celoAllowance
       case 'monad': return monadAllowance
       case 'etherlink': return etherlinkAllowance
+      case 'tron': return BigInt(0) // Placeholder for Tron - no approval needed for direct transfers
       default: return null
     }
   }
@@ -271,7 +302,15 @@ export function ModernBridge() {
   }
 
   const isValidDestination = () => {
-    return swapData.destinationAddress === '' || isAddress(swapData.destinationAddress)
+    // If bridging TO Tron, destination address is required
+    if (swapData.toNetwork === 'tron') {
+      if (!swapData.destinationAddress) return false
+      return isValidTronAddress(swapData.destinationAddress)
+    }
+    
+    // For other networks, address is optional
+    if (!swapData.destinationAddress) return true
+    return isAddress(swapData.destinationAddress) || isValidEthAddress(swapData.destinationAddress)
   }
 
   const handleSwapNetworks = () => {
@@ -315,15 +354,6 @@ export function ModernBridge() {
   }
 
   const handleBridge = async () => {
-    if (!address || !isNetworkSupported) return
-
-    // Switch to source network if needed
-    const sourceChainId = NETWORKS[swapData.fromNetwork].chainId
-    if (chainId !== sourceChainId) {
-      await switchChain({ chainId: sourceChainId })
-      return
-    }
-
     try {
       // Set bridge loading state and show overlay
       setBridgeState({ 
@@ -332,34 +362,92 @@ export function ModernBridge() {
         error: undefined, 
         showOverlay: true 
       })
-      
-      // Create the cross-chain intent
-      const destinationAddress = swapData.destinationAddress || address
-      const amount = parseUnits(swapData.amount, 6)
-      
-      // Generate unique order hash
-      const orderHash = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-      
-      // Generate hash lock (secret hash for HTLC)
-      const secret = `0x${crypto.getRandomValues(new Uint8Array(32)).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '')}` as `0x${string}`
-      const hashLock = `0x${await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret)).then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join(''))}` as `0x${string}`
-      
-      // Time locks (24 hours for withdrawal, 48 hours for cancellation)
-      const timeLocks = Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours from now
-      
+
+      // Determine which wallet to use based on source network
+      let userAddress: string
+      let destinationAddress: string
+
+      if (swapData.fromNetwork === 'tron') {
+        // Source is Tron - use TronLink
+        if (!isTronConnected || !tronAccount) {
+          throw new Error('Please connect TronLink wallet first')
+        }
+        userAddress = tronAccount.address.base58
+        
+        // Convert destination address if needed
+        if (swapData.destinationAddress) {
+          if (swapData.toNetwork === 'tron') {
+            destinationAddress = swapData.destinationAddress
+          } else {
+            // Converting from Tron to EVM - convert address if needed
+            const convertResult = convertAddressForNetwork(swapData.destinationAddress, 'evm')
+            if (!convertResult.isValid) {
+              throw new Error(`Invalid destination address: ${convertResult.error}`)
+            }
+            destinationAddress = convertResult.address!
+          }
+        } else {
+          // Use user address as destination
+          if (swapData.toNetwork === 'tron') {
+            destinationAddress = userAddress
+          } else {
+            // Need EVM address for destination
+            if (!address) {
+              throw new Error('Please connect MetaMask wallet for EVM destination')
+            }
+            destinationAddress = address
+          }
+        }
+      } else {
+        // Source is EVM - use MetaMask
+        if (!isConnected || !address) {
+          throw new Error('Please connect MetaMask wallet first')
+        }
+        
+        // Switch to source network if needed
+        const sourceChainId = NETWORKS[swapData.fromNetwork].chainId
+        if (chainId !== sourceChainId) {
+          await switchChain({ chainId: sourceChainId })
+          return
+        }
+        
+        userAddress = address
+        
+        // Convert destination address if needed
+        if (swapData.destinationAddress) {
+          if (swapData.toNetwork === 'tron') {
+            // Converting from EVM to Tron - convert address if needed
+            const convertResult = convertAddressForNetwork(swapData.destinationAddress, 'tron')
+            if (!convertResult.isValid) {
+              throw new Error(`Invalid destination address: ${convertResult.error}`)
+            }
+            destinationAddress = convertResult.address!
+          } else {
+            destinationAddress = swapData.destinationAddress
+          }
+        } else {
+          // Use user address as destination
+          if (swapData.toNetwork === 'tron') {
+            // Need Tron address for destination
+            if (!isTronConnected || !tronAccount) {
+              throw new Error('Please connect TronLink wallet for Tron destination')
+            }
+            destinationAddress = tronAccount.address.base58
+          } else {
+            destinationAddress = userAddress
+          }
+        }
+      }
+
       console.log('Creating cross-chain intent:', {
-        orderHash,
         fromNetwork: swapData.fromNetwork,
         toNetwork: swapData.toNetwork,
         amount: swapData.amount,
-        destinationAddress,
-        hashLock: hashLock.slice(0, 10) + '...',
-        timeLocks
+        userAddress,
+        destinationAddress
       })
-
-      // Call resolver API directly - resolver will handle the token transfer
-      console.log('Creating cross-chain intent via resolver API')
       
+      // Call resolver API
       const response = await fetch('http://localhost:3001/swap', {
         method: 'POST',
         headers: {
@@ -371,11 +459,11 @@ export function ModernBridge() {
           fromToken: 'USDC',
           toToken: 'USDC',
           amount: swapData.amount,
-          userAddress: address,
+          userAddress,
           destinationAddress
         })
       })
-
+      
       const result = await response.json()
       
       if (result.success) {
@@ -386,7 +474,6 @@ export function ModernBridge() {
           error: undefined,
           showOverlay: true
         })
-        
       } else {
         console.error('❌ Bridge failed:', result)
         setBridgeState({ 
@@ -396,16 +483,14 @@ export function ModernBridge() {
           showOverlay: true
         })
       }
-
-      // Store the secret for later use (in a real app, this would be handled securely)
-      console.log('Secret for this bridge (save this):', secret)
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Bridge error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Bridge failed'
       setBridgeState({ 
         isLoading: false, 
         isSuccess: false, 
-        error: error.message || 'Bridge failed',
+        error: errorMessage,
         showOverlay: true
       })
     }
@@ -452,11 +537,12 @@ export function ModernBridge() {
           error: `Resolver error: ${result.error}` 
         }))
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Failed to call resolver API:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       setTxState(prev => ({ 
         ...prev, 
-        error: `Failed to notify resolver: ${error.message}` 
+        error: `Failed to notify resolver: ${errorMessage}` 
       }))
     }
   }
@@ -478,11 +564,39 @@ export function ModernBridge() {
 
         <CardContent className="space-y-6">
           {/* Connection Alert */}
-          {!isConnected && (
+          {!isConnected && !isTronConnected && (
             <Alert variant="warning">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Connect your wallet to start bridging tokens
+                Connect your wallet (MetaMask for EVM chains, TronLink for Tron) to start bridging tokens
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* TronLink Connection Alert */}
+          {(swapData.fromNetwork === 'tron' || swapData.toNetwork === 'tron') && !isTronConnected && (
+            <Alert variant="warning">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>TronLink wallet required for Tron network interactions</span>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={connectTron}
+                  disabled={!isTronLinkAvailable || tronLoading}
+                >
+                  {tronLoading ? 'Connecting...' : 'Connect TronLink'}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* TronLink Error */}
+          {tronError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                TronLink Error: {tronError}
               </AlertDescription>
             </Alert>
           )}
@@ -546,15 +660,17 @@ export function ModernBridge() {
                       <option value="celo">Celo Alfajores</option>
                       <option value="monad">Monad Testnet</option>
                       <option value="etherlink">Etherlink Testnet</option>
+                      <option value="tron">Tron Shasta</option>
                     </select>
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                       <img 
+                        key={swapData.fromNetwork}
                         src={NETWORK_LOGOS[swapData.fromNetwork]} 
                         alt={NETWORKS[swapData.fromNetwork].name}
                         className="w-6 h-6 rounded-full"
                         onError={(e) => {
-                          // Fallback for broken images
-                          e.currentTarget.style.display = 'none';
+                          // Fallback for broken images - show a default circle
+                          e.currentTarget.src = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%20fill%3D%22none%22%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2214%22%20r%3D%2214%22%20fill%3D%22%23666%22%2F%3E%3Ctext%20x%3D%2214%22%20y%3D%2218%22%20text-anchor%3D%22middle%22%20fill%3D%22%23fff%22%20font-size%3D%2210%22%20font-family%3D%22monospace%22%3E%3F%3C%2Ftext%3E%3C%2Fsvg%3E";
                         }}
                       />
                     </div>
@@ -593,15 +709,17 @@ export function ModernBridge() {
                       <option value="celo">Celo Alfajores</option>
                       <option value="monad">Monad Testnet</option>
                       <option value="etherlink">Etherlink Testnet</option>
+                      <option value="tron">Tron Shasta</option>
                     </select>
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                       <img 
+                        key={swapData.toNetwork}
                         src={NETWORK_LOGOS[swapData.toNetwork]} 
                         alt={NETWORKS[swapData.toNetwork].name}
                         className="w-6 h-6 rounded-full"
                         onError={(e) => {
-                          // Fallback for broken images
-                          e.currentTarget.style.display = 'none';
+                          // Fallback for broken images - show a default circle
+                          e.currentTarget.src = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%20fill%3D%22none%22%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2214%22%20r%3D%2214%22%20fill%3D%22%23666%22%2F%3E%3Ctext%20x%3D%2214%22%20y%3D%2218%22%20text-anchor%3D%22middle%22%20fill%3D%22%23fff%22%20font-size%3D%2210%22%20font-family%3D%22monospace%22%3E%3F%3C%2Ftext%3E%3C%2Fsvg%3E";
                         }}
                       />
                     </div>
@@ -653,9 +771,9 @@ export function ModernBridge() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700">
-                Destination Address (Optional)
+                {swapData.toNetwork === 'tron' ? 'Destination Address (Required)' : 'Destination Address (Optional)'}
               </label>
-              {address && (
+              {address && swapData.toNetwork !== 'tron' && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -670,15 +788,21 @@ export function ModernBridge() {
             <div className="relative">
               <Wallet className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
-                placeholder="0x... (leave empty to use your address)"
+                placeholder={swapData.toNetwork === 'tron' ? 'Enter Tron address (T...)' : '0x... (leave empty to use your address)'}
                 value={swapData.destinationAddress}
                 onChange={(e) => setSwapData(prev => ({ ...prev, destinationAddress: e.target.value }))}
                 className="pl-10"
                 disabled={txState.isLoading}
+                required={swapData.toNetwork === 'tron'}
               />
             </div>
-            {swapData.destinationAddress && !isValidDestination() && (
-              <p className="text-sm text-red-500">Invalid address format</p>
+            {!isValidDestination() && (
+              <p className="text-sm text-red-500">
+                {swapData.toNetwork === 'tron' && !swapData.destinationAddress 
+                  ? 'Tron destination address is required' 
+                  : 'Invalid address format'
+                }
+              </p>
             )}
           </div>
 

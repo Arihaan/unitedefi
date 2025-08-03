@@ -25,6 +25,18 @@ const etherlinkTestnet = {
   }
 } as const
 
+const tronShasta = {
+  id: 2,
+  name: 'Tron Shasta',
+  nativeCurrency: { name: 'TRX', symbol: 'TRX', decimals: 6 },
+  rpcUrls: {
+    default: { http: ['https://api.shasta.trongrid.io'] }
+  },
+  blockExplorers: {
+    default: { name: 'Tronscan Shasta', url: 'https://shasta.tronscan.org' }
+  }
+} as const
+
 export const NETWORKS = {
   sepolia: {
     chainId: sepolia.id,
@@ -66,6 +78,16 @@ export const NETWORKS = {
     escrowFactory: '0xcEeeaA149BEd3Af5FB9553f0AdA0a537efcc6256',
     resolver: '0x917999645773E99d03d44817B7318861F018Cb74',
   },
+  tron: {
+    chainId: tronShasta.id,
+    name: 'Tron Shasta',
+    nativeCurrency: tronShasta.nativeCurrency,
+    rpcUrl: 'https://api.shasta.trongrid.io',
+    blockExplorer: 'https://shasta.tronscan.org',
+    usdc: 'TE6QE6GR1VCsJ3p9H3JDjY391Z9hqUCJem',
+    escrowFactory: 'TQsFBuQZHoCi4MMtMFvb2sW5N8hntW4BZE',
+    resolver: 'TPEQejXeb5ojShytfYaUEjvU25YLWBgjnM',
+  },
 } as const
 
 export const SUPPORTED_TOKENS = {
@@ -78,6 +100,7 @@ export const SUPPORTED_TOKENS = {
       [celoAlfajores.id]: NETWORKS.celo.usdc,
       [monadTestnet.id]: NETWORKS.monad.usdc,
       [etherlinkTestnet.id]: NETWORKS.etherlink.usdc,
+      [tronShasta.id]: NETWORKS.tron.usdc,
     },
     logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
   },

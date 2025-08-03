@@ -1,6 +1,7 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount, useChainId } from 'wagmi'
 import { ModernBridge } from '@/components/ModernBridge'
+import { TronConnectButton } from '@/components/TronConnectButton'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { NETWORKS } from '@/config/contracts'
@@ -50,8 +51,11 @@ function App() {
             </div>
           </div>
 
-          {/* Connect Button Only */}
-          <ConnectButton />
+          {/* Wallet Connect Buttons */}
+          <div className="flex items-center gap-3">
+            <ConnectButton />
+            <TronConnectButton />
+          </div>
         </div>
       </header>
       
@@ -89,7 +93,7 @@ function App() {
             <Alert variant="warning">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                You're connected to an unsupported network. Please switch to Ethereum Sepolia, Celo Alfajores, Monad Testnet, or Etherlink Testnet to use the bridge.
+                You're connected to an unsupported network. Please switch to Ethereum Sepolia, Celo Alfajores, Monad Testnet, Etherlink Testnet, or connect TronLink for Tron Shasta to use the bridge.
               </AlertDescription>
             </Alert>
           </div>

@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 export const NETWORKS = {
   sepolia: {
     chainId: 11155111,
@@ -20,6 +23,32 @@ export const NETWORKS = {
     settlement: "0x14367b834E7C39fD316730D413bF07c7e7a2E1A9",
     escrowFactory: "0x3FF2736041437F74eA564505db782F86ADC69e35",
     usdc: "0x2F25deB3848C207fc8E0c34035B3Ba7fC157602B"
+  },
+  monad: {
+    chainId: 10143,
+    rpcUrl: "https://monad-testnet.drpc.org",
+    weth: "0x1eB50687659aD0012e70f6407C4Fe2d312827df2",
+    settlement: "0x1eB50687659aD0012e70f6407C4Fe2d312827df2",
+    escrowFactory: "0xcEeeaA149BEd3Af5FB9553f0AdA0a537efcc6256",
+    usdc: "0xc477386a8ced1fe69d5d4ecd8eaf6558da9e537c"
+  },
+  etherlink: {
+    chainId: 128123,
+    rpcUrl: "https://node.ghostnet.etherlink.com",
+    weth: "0x1eB50687659aD0012e70f6407C4Fe2d312827df2",
+    settlement: "0x1eB50687659aD0012e70f6407C4Fe2d312827df2",
+    escrowFactory: "0xcEeeaA149BEd3Af5FB9553f0AdA0a537efcc6256",
+    usdc: "0xC477386A8CED1fE69d5d4eCD8EaF6558DA9e537c"
+  },
+  tron: {
+    chainId: 2,
+    rpcUrl: "https://api.shasta.trongrid.io",
+    fullNode: "https://api.shasta.trongrid.io",
+    solidityNode: "https://api.shasta.trongrid.io",
+    eventServer: "https://api.shasta.trongrid.io",
+    usdc: "TLcrNFz7x433NsqFrJFc3aixZGLUsC6brA",
+    settlement: "TQsFBuQZHoCi4MMtMFvb2sW5N8hntW4BZE",
+    escrowFactory: "TQsFBuQZHoCi4MMtMFvb2sW5N8hntW4BZE" // Using Settlement contract as fallback
   }
 };
 

@@ -31,7 +31,7 @@ app.get('/health', (req, res) => {
 app.get('/info', (req, res) => {
   res.json({
     resolverAddress: RESOLVER_CONFIG.address,
-    supportedNetworks: ['sepolia', 'celo', 'monad', 'etherlink'],
+    supportedNetworks: ['sepolia', 'celo', 'monad', 'etherlink', 'tron'],
     timeLocks: RESOLVER_CONFIG.timeLocks,
     safetyDeposit: RESOLVER_CONFIG.safetyDeposit,
     architecture: '1inch Fusion+ Compatible',
@@ -66,10 +66,10 @@ app.post('/swap', async (req, res) => {
       });
     }
 
-    if (!['sepolia', 'celo', 'monad', 'etherlink'].includes(fromNetwork) || !['sepolia', 'celo', 'monad', 'etherlink'].includes(toNetwork)) {
+    if (!['sepolia', 'celo', 'monad', 'etherlink', 'tron'].includes(fromNetwork) || !['sepolia', 'celo', 'monad', 'etherlink', 'tron'].includes(toNetwork)) {
       return res.status(400).json({
         error: 'Unsupported network',
-        supported: ['sepolia', 'celo', 'monad', 'etherlink']
+        supported: ['sepolia', 'celo', 'monad', 'etherlink', 'tron']
       });
     }
 
@@ -220,6 +220,11 @@ app.get('/supported', (req, res) => {
         name: 'Etherlink Testnet',
         chainId: 128123,
         tokens: ['USDC']
+      },
+      tron: {
+        name: 'Tron Shasta',
+        chainId: 2,
+        tokens: ['USDC']
       }
     },
     pairs: [
@@ -234,7 +239,15 @@ app.get('/supported', (req, res) => {
       { from: 'celo', to: 'etherlink', tokens: ['USDC'] },
       { from: 'etherlink', to: 'celo', tokens: ['USDC'] },
       { from: 'monad', to: 'etherlink', tokens: ['USDC'] },
-      { from: 'etherlink', to: 'monad', tokens: ['USDC'] }
+      { from: 'etherlink', to: 'monad', tokens: ['USDC'] },
+      { from: 'sepolia', to: 'tron', tokens: ['USDC'] },
+      { from: 'tron', to: 'sepolia', tokens: ['USDC'] },
+      { from: 'celo', to: 'tron', tokens: ['USDC'] },
+      { from: 'tron', to: 'celo', tokens: ['USDC'] },
+      { from: 'monad', to: 'tron', tokens: ['USDC'] },
+      { from: 'tron', to: 'monad', tokens: ['USDC'] },
+      { from: 'etherlink', to: 'tron', tokens: ['USDC'] },
+      { from: 'tron', to: 'etherlink', tokens: ['USDC'] }
     ],
     architecture: '1inch Fusion+ Compatible'
   });

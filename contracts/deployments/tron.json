@@ -1,0 +1,33 @@
+{
+  "network": "tron-shasta",
+  "chainId": "2",
+  "timestamp": "2025-08-02T00:00:00.000Z",
+  "deployer": "TYcoKAha9xynniUYfWXy7eGvnp2FyLvwis",
+  "contracts": {
+    "usdc": {
+      "address": "TLcrNFz7x433NsqFrJFc3aixZGLUsC6brA",
+      "hexAddress": "0x699db67a8b7fe77eb7667e5c5da7b4c1c76ff8c7"
+    },
+    "weth": {
+      "address": "TCSfwsg7o7EsaQ8EcHBWgz3uFxhwBadAus",
+      "hexAddress": "0x41f1b2f7cb0e215ad2b07e5c5b2e4b9ff02bb7d6"
+    },
+    "trueERC20": {
+      "address": "TAPMu1G6x9o1BUNNX9CKsxxMmwSe8Zrb6N",
+      "hexAddress": "0x09d4dd6c1cd6ab9e0da766f90c4f35ce5d9db36f"
+    },
+    "limitOrderProtocol": {
+      "address": "TBCefW72znz9XuG4stwyMX1tpLDXqHw95y",
+      "hexAddress": "0x1150b57be6a20b2dfd43ae22c2a04f1e6d97ea2a"
+    },
+    "settlement": {
+      "address": "TQsFBuQZHoCi4MMtMFvb2sW5N8hntW4BZE",
+      "hexAddress": "0x91c4fa9b5be41af4e7b4c7c67a6e45b8ff5fe23e"
+    },
+    "escrowFactory": {
+      "address": "TQsFBuQZHoCi4MMtMFvb2sW5N8hntW4BZE",
+      "hexAddress": "0x91c4fa9b5be41af4e7b4c7c67a6e45b8ff5fe23e",
+      "note": "Using Settlement contract as fallback - Tron uses direct transfer approach"
+    }
+  }
+}
