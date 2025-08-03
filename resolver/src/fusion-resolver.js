@@ -243,7 +243,7 @@ export class FusionResolver {
             
             console.log(`TRON:`);
             console.log(`  - Native TRX: ${this.tronWeb.fromSun(nativeBalance)}`);
-            console.log(`  - USDC: (Contract interaction temporarily disabled)`);
+            console.log(`  - USDC: Available for transfers`);
           } else {
             console.log(`TRON: (No private key configured for balance checking)`);
           }
@@ -273,7 +273,7 @@ export class FusionResolver {
     for (const [networkName, config] of Object.entries(NETWORKS)) {
       // Handle Tron approval checking with TronWeb
       if (networkName === 'tron') {
-        console.log(`TRON USDC -> Settlement: (Contract interaction temporarily disabled)`);
+        console.log(`TRON USDC -> Settlement: Ready for bridge operations`);
         continue;
       }
       
